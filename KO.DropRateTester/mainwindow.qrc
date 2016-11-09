@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/KODropRateTester">
+        <file>Resources/rate-tester.ico</file>
+    </qresource>
+</RCC>
