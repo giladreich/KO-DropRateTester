@@ -2,14 +2,19 @@
 ![Logo](/images/rate-tester.png)
 
 I came up with this little program just from learning about how the logic of the drop system MGames implemented, so take as note that it doesn't do anything fancy, just allows you to test the frequency that monsters will drop items at a specific rate and mostly for eduction purpose.
+
 Note that the code is based on the original KnightOnline source code in order to retrieve realistic results.
+
 Another note that in the database we read 100% as 10,000, so the input should be written as normal percentage(so 75% is input of 75).
 
 If you're looking for the exe/binaries download, here it is:
-[Download link](https://drive.google.com/open?id=0B0vTRMrlXZn4ZG50VUlVZW9rSXc).
+
+[Download link](https://drive.google.com/open?id=0B0vTRMrlXZn4TVFqM1VIdlBlQlk)
 
 If you're looking for the drop rates for specific items, here it is in excel sheets(token from the 12xx database):
+
 [K_MONSTER / K_MONSTER_ITEM](https://drive.google.com/open?id=1wXmv7-7hdVxacs2Jq3aUrO0TWzy96sKqs3MMZTTojaU)
+
 [MAKE_ITEM_GROUP](https://drive.google.com/open?id=1LqjeOHZM-8lyBHHmrw5QT9gWEpX5IsBqA4vBrWz8KNU)
                                                                                                                                                                                                                                                                                      
 
@@ -27,8 +32,11 @@ In the database we have 3 important tabels regarding the drop rate which we are 
 - ```MAKE_ITEM_GROUP``` - iItemGroupNum is the group id which depends on the K_MONSTER_ITEM group id.
 
 So to sum the things above, if we want to have a specific drop to specific monster, we read the sSid in K_MONSTER and we want to add drop to that specific monster which will be declared as the same value in sIndex in K_MONSTER_ITEM table. 
+
 In K_MONSTER_ITEM we have 2 different columns for declaring the drop group id's and 2 columns for their corresponding drop rate, that means, that in each group that can be found by the iItemGroupNum in MAKE_ITEM_GROUP, there are 30 different items.
-So if we have 2x groups, that means there is a chance for 60 different items to drop from the same monster as each group/row is 30 different items.
+
+So if we have 2x groups, that means there is a chance for 60 different items to drop from the same monster as each group/row contains 30 different items.
+
 You can find at the end of the document useful queries for displaying what you need.
                                                                                                                                                                                                                                                                                      
 ## Client/Server
@@ -45,10 +53,14 @@ You can find at the end of the document useful queries for displaying what you n
 > * At this point, the client already have a box of items, so when the player will right click the box in game, a request from the client to the game server will be sent to retrieve all the bundle of items that are already procced before by the AIServer.
 
 So this is all the logic that happens in the background when we kill a monster and receive a box of items. 
+
 Note that the random item generator that MGames are using is part of the mt19937 random library and they build a wrapper class with static functions that will be used many many times in the server by the "myrand(min, max)" function so that way, we really get a real random numbers since this function gets called in many different cases such as:
 attack damage, attack fail, anvil upgrades, item drop and vice versa...
+
 Also everytime we restart the server, this wrapper class they build, will seed/feed/fill the random generator object with the machine time only once! So that way, the random numbers that we receive are not the same default random numbers that we get every restart.
+
 So all these rumors about catching the first upgrade item after server restart to have better success rate OR the person who have premium will loot the box of items to get better items and many more are completely wrong.
+
 The only differences with premium membership that the AIServer will check whether you have premium in the part where you get the amount of coins from the box of items, so premium members will receive more money than normal players.
 
                                                                                                                                                                                                                                                                                      
@@ -57,12 +69,15 @@ The only differences with premium membership that the AIServer will check whethe
 -- Shows organized results of the monster id, name, item drop and percentage, item group drop and percentage.
 SELECT  
 	m.sSid, m.strName, m.sPid,
-	mi.iItem03 AS ItemId1, (SELECT strName FROM ITEM WHERE Num =  mi.iItem03) ItemName1, mi.sPersent03 / 100 AS Percentage1, 
-	mi.iItem04 AS ItemId2, (SELECT strName FROM ITEM WHERE Num =  mi.iItem04) ItemName2, mi.sPersent04 / 100 AS Percentage2, 
-	mi.iItem05 AS ItemId3, (SELECT strName FROM ITEM WHERE Num =  mi.iItem05) ItemName3, mi.sPersent05 / 100 AS Percentage3,
+	mi.iItem03 AS ItemId1, (SELECT strName FROM ITEM WHERE Num =  mi.iItem03) ItemName1,
+		CONVERT(DOUBLE PRECISION, mi.sPersent03) / 100 AS Percentage1,
+	mi.iItem04 AS ItemId2, (SELECT strName FROM ITEM WHERE Num =  mi.iItem04) ItemName2, 
+		CONVERT(DOUBLE PRECISION, mi.sPersent04) / 100 AS Percentage2, 
+	mi.iItem05 AS ItemId3, (SELECT strName FROM ITEM WHERE Num =  mi.iItem05) ItemName3, 
+		CONVERT(DOUBLE PRECISION, mi.sPersent05) / 100 AS Percentage3, 
 	-- Group ID = MAKE_ITEM_GROUP 30 items that can drop in specific percentage.
-	mi.iItem01 AS ##GroupID1, mi.sPersent01 / 100 AS GPercentage1,
-	mi.iItem02 AS ##GroupID2, mi.sPersent02 / 100 AS GPercentage1
+	mi.iItem01 AS ##GroupID1, CONVERT(DOUBLE PRECISION, mi.sPersent01) / 100 AS GPercentage1,
+	mi.iItem02 AS ##GroupID2, CONVERT(DOUBLE PRECISION, mi.sPersent02) / 100 AS GPercentage1
 FROM 
 	K_MONSTER AS m
 	INNER JOIN 
@@ -122,4 +137,4 @@ I'm Using here:
 - Windows 10
 
 So if you're planing to build this from source, you'll need to download the Qt visual studio pluging version 5.6 and set environment variables to QTDIR.
-Otherwise, just get the binaries/executeable from the [download link](https://drive.google.com/open?id=0B0vTRMrlXZn4ZG50VUlVZW9rSXc).
+Otherwise, just get the binaries/executeable from the [download link](https://drive.google.com/open?id=0B0vTRMrlXZn4TVFqM1VIdlBlQlk).
