@@ -1,7 +1,7 @@
 # KnightOnline Drop Rate Tester
-![Logo](/images/rate-tester.png)
+![Logo](/pictures/rate-tester.png)
 
-I came up with this little program just from learning about how the logic of the drop system MGames implemented, so take as note that it doesn't do anything fancy, just allows you to test the frequency that monsters will drop items at a specific rate and mostly for eduction purpose.
+I wrote this simple tool part of my learning about the logic of the drop system MGames is implemented, so take as note that it doesn't do anything fancy, just allows you to test the frequency that monsters will drop items at a specific rate and mostly for eduction purpose.
 
 Note that the code is based on the original KnightOnline source code in order to retrieve realistic results.
 
@@ -9,7 +9,7 @@ Another note that in the database we read 100% as 10,000, so the input should be
 
 If you're looking for the exe/binaries download, here it is:
 
-[Download link](https://drive.google.com/open?id=0B0vTRMrlXZn4TVFqM1VIdlBlQlk)
+[Download link](http://www.mediafire.com/file/37ycjgyrcay5v3c/KO-DropRateTester-1.0.0.7z)
 
 If you're looking for the drop rates for specific items, here it is in excel sheets(token from the 12xx database):
 
@@ -65,69 +65,92 @@ The only differences with premium membership that the AIServer will check whethe
 
                                                                                                                                                                                                                                                                                      
 ## Useful SQL Queries
+First run the create stored procedure script below and then you can always reuse it like this:
+
 ```sql
+EXEC sp_MonsterItems '%Isiloon%'
+```
+
+```sql
+CREATE PROCEDURE sp_MonsterItems
+    @MonsterName varchar(30)
+AS
+DECLARE @GroupIDs TABLE (id int)
+
 -- Shows organized results of the monster id, name, item drop and percentage, item group drop and percentage.
 SELECT  
-	m.sSid, m.strName, m.sPid,
-	mi.iItem03 AS ItemId1, (SELECT strName FROM ITEM WHERE Num =  mi.iItem03) ItemName1,
-		CONVERT(DOUBLE PRECISION, mi.sPersent03) / 100 AS Percentage1,
-	mi.iItem04 AS ItemId2, (SELECT strName FROM ITEM WHERE Num =  mi.iItem04) ItemName2, 
-		CONVERT(DOUBLE PRECISION, mi.sPersent04) / 100 AS Percentage2, 
-	mi.iItem05 AS ItemId3, (SELECT strName FROM ITEM WHERE Num =  mi.iItem05) ItemName3, 
-		CONVERT(DOUBLE PRECISION, mi.sPersent05) / 100 AS Percentage3, 
-	-- Group ID = MAKE_ITEM_GROUP 30 items that can drop in specific percentage.
-	mi.iItem01 AS ##GroupID1, CONVERT(DOUBLE PRECISION, mi.sPersent01) / 100 AS GPercentage1,
-	mi.iItem02 AS ##GroupID2, CONVERT(DOUBLE PRECISION, mi.sPersent02) / 100 AS GPercentage1
+    m.sSid, m.strName, m.sPid,
+    mi.iItem03 AS ItemId1, (SELECT strName FROM ITEM WHERE Num =  mi.iItem03) ItemName1,
+        CONVERT(DOUBLE PRECISION, mi.sPersent03) / 100 AS Percentage1,
+    mi.iItem04 AS ItemId2, (SELECT strName FROM ITEM WHERE Num =  mi.iItem04) ItemName2, 
+        CONVERT(DOUBLE PRECISION, mi.sPersent04) / 100 AS Percentage2, 
+    mi.iItem05 AS ItemId3, (SELECT strName FROM ITEM WHERE Num =  mi.iItem05) ItemName3, 
+        CONVERT(DOUBLE PRECISION, mi.sPersent05) / 100 AS Percentage3, 
+    -- Group ID = MAKE_ITEM_GROUP 30 items that can drop in specific percentage.
+    mi.iItem01 AS ##GroupID1, CONVERT(DOUBLE PRECISION, mi.sPersent01) / 100 AS GPercentage1,
+    mi.iItem02 AS ##GroupID2, CONVERT(DOUBLE PRECISION, mi.sPersent02) / 100 AS GPercentage1
 FROM 
-	K_MONSTER AS m
-	INNER JOIN 
-	K_MONSTER_ITEM AS mi
+    K_MONSTER AS m
+    INNER JOIN 
+    K_MONSTER_ITEM AS mi
 ON 
-	m.sSid = mi.sIndex
+    m.sSid = mi.sIndex
 WHERE 
-	m.strName LIKE '%Snake Queen%'
+    m.strName LIKE @MonsterName
 ORDER BY
-	m.sSid
+    m.sSid
 
+-- Storing all GroupID's into variables.
+INSERT INTO @GroupIDs(id) SELECT DISTINCT mi.iItem01 FROM K_MONSTER AS m INNER JOIN K_MONSTER_ITEM AS mi 
+ON  m.sSid = mi.sIndex WHERE m.strName LIKE @MonsterName AND mi.iItem01 > 0
 
--- Shows the group id, item id item name by the group id selected.
+INSERT INTO @GroupIDs(id) SELECT DISTINCT mi.iItem02 FROM K_MONSTER AS m INNER JOIN K_MONSTER_ITEM AS mi 
+ON  m.sSid = mi.sIndex WHERE m.strName LIKE @MonsterName AND mi.iItem02 > 0
 
-SELECT
-	iItemGroupNum AS GroupID,
-	iItem_1   AS GItem1,   (SELECT strName FROM ITEM WHERE Num = iItem_1)   GItemName1,
-	iItem_2   AS GItem2,   (SELECT strName FROM ITEM WHERE Num = iItem_2)   GItemName2,
-	iItem_3   AS GItem3,   (SELECT strName FROM ITEM WHERE Num = iItem_3)   GItemName3,
-	iItem_4   AS GItem4,   (SELECT strName FROM ITEM WHERE Num = iItem_4)   GItemName4,
-	iItem_5   AS GItem5,   (SELECT strName FROM ITEM WHERE Num = iItem_5)   GItemName5,
-	iItem_6   AS GItem6,   (SELECT strName FROM ITEM WHERE Num = iItem_6)   GItemName6,
-	iItem_7   AS GItem7,   (SELECT strName FROM ITEM WHERE Num = iItem_7)   GItemName7,
-	iItem_8   AS GItem8,   (SELECT strName FROM ITEM WHERE Num = iItem_8)   GItemName8,
-	iItem_9   AS GItem9,   (SELECT strName FROM ITEM WHERE Num = iItem_9)   GItemName9,
-	iItem_10 AS GItem10, (SELECT strName FROM ITEM WHERE Num = iItem_10) GItemName10,
-	iItem_11 AS GItem11, (SELECT strName FROM ITEM WHERE Num = iItem_11) GItemName11,
-	iItem_13 AS GItem13, (SELECT strName FROM ITEM WHERE Num = iItem_13) GItemName13,
-	iItem_14 AS GItem14, (SELECT strName FROM ITEM WHERE Num = iItem_14) GItemName14,
-	iItem_15 AS GItem15, (SELECT strName FROM ITEM WHERE Num = iItem_15) GItemName15,
-	iItem_16 AS GItem16, (SELECT strName FROM ITEM WHERE Num = iItem_16) GItemName16,
-	iItem_17 AS GItem17, (SELECT strName FROM ITEM WHERE Num = iItem_17) GItemName17,
-	iItem_18 AS GItem18, (SELECT strName FROM ITEM WHERE Num = iItem_18) GItemName18,
-	iItem_19 AS GItem19, (SELECT strName FROM ITEM WHERE Num = iItem_19) GItemName19,
-	iItem_21 AS GItem21, (SELECT strName FROM ITEM WHERE Num = iItem_21) GItemName21,
-	iItem_22 AS GItem22, (SELECT strName FROM ITEM WHERE Num = iItem_22) GItemName22,
-	iItem_23 AS GItem23, (SELECT strName FROM ITEM WHERE Num = iItem_23) GItemName23,
-	iItem_24 AS GItem24, (SELECT strName FROM ITEM WHERE Num = iItem_24) GItemName24,
-	iItem_25 AS GItem25, (SELECT strName FROM ITEM WHERE Num = iItem_25) GItemName25,
-	iItem_26 AS GItem26, (SELECT strName FROM ITEM WHERE Num = iItem_26) GItemName26,
-	iItem_27 AS GItem27, (SELECT strName FROM ITEM WHERE Num = iItem_27) GItemName27,
-	iItem_28 AS GItem28, (SELECT strName FROM ITEM WHERE Num = iItem_28) GItemName28,
-	iItem_29 AS GItem29, (SELECT strName FROM ITEM WHERE Num = iItem_29) GItemName29,
-	iItem_30 AS GItem30, (SELECT strName FROM ITEM WHERE Num = iItem_30) GItemName30
-FROM 
-	MAKE_ITEM_GROUP
-WHERE 
-	iItemGroupNum = 2005
-ORDER BY
-	iItemGroupNum
+DECLARE @GroupIDsClean TABLE (id int);
+INSERT INTO @GroupIDsClean SELECT DISTINCT * FROM @GroupIDs
+
+DECLARE @c int = 1,
+        @IdsCount int;
+SELECT @IdsCount = COUNT(id) FROM @GroupIDsClean
+
+WHILE @c <= @IdsCount
+BEGIN
+    DECLARE @iItemGroupNum int;
+    SELECT @iItemGroupNum = id FROM (SELECT ROW_NUMBER() OVER (ORDER BY id) AS RowNum, id 
+    FROM @GroupIDsClean) AS t WHERE t.RowNum = @c;
+    
+    DECLARE @columns     nvarchar(3000) = '',
+            @params      nvarchar(500),
+            @query       nvarchar(4000),
+            @i           int = 1,
+            @columnCount int;
+             
+    SELECT @columnCount = COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'MAKE_ITEM_GROUP';
+    EXEC sp_addmessage 50001, 16, '%s GItem%d,(SELECT strName FROM ITEM WHERE Num = iItem_%d) GItemName%d,', NULL, NULL, 'replace';
+    WHILE @i < @columnCount
+    BEGIN
+        SELECT @columns += FORMATMESSAGE(50001, COLUMN_NAME, @i, @i, @i)
+        FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'MAKE_ITEM_GROUP' AND ORDINAL_POSITION = @i + 1;
+        SET @i += 1;
+    END
+    SELECT @columns = SUBSTRING(@columns, 0, LEN(@columns));
+
+    SET @columns = 'iItemGroupNum GroupID,' + @columns;
+    SET @params = '@iItemGroupNum INT';
+    SET @query = 
+    'SELECT
+        ' + @columns + ' 
+    FROM 
+        MAKE_ITEM_GROUP
+    WHERE
+        iItemGroupNum = @iItemGroupNum
+    ORDER BY
+        iItemGroupNum';
+    EXEC sp_executesql @query, @params, @iItemGroupNum
+    
+    SET @c += 1;
+END
 ```
 
 ## Development
@@ -136,5 +159,5 @@ I'm Using here:
 - Visual Studio 2017
 - Windows 10
 
-So if you're planing to build this from source, you'll need to download the Qt visual studio pluging version 5.6 and set environment variables to QTDIR.
-Otherwise, just get the binaries/executeable from the [download link](https://drive.google.com/open?id=0B0vTRMrlXZn4TVFqM1VIdlBlQlk).
+So if you're planing to build this from source, you'll need to download Qt for visual studio(version 5.6, also plugin) and set environment variables to QTDIR or you can build the project using qmake(works almost the same as cmake).
+Otherwise, just get the binaries/executeable from the [download link](http://www.mediafire.com/file/37ycjgyrcay5v3c/KO-DropRateTester-1.0.0.7z).

@@ -1,4 +1,4 @@
 .vs/
-KO.DropRateTester/GeneratedFiles/
-KO.DropRateTester/x64/
+src/KO.DropRateTester/GeneratedFiles/
+src/KO.DropRateTester/x64/
 x64/
